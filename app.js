@@ -1,6 +1,6 @@
 import {
   zoneName, scaleFromStanding, Tracker, RepDetector, TrialDetector, SetTracker,
-} from './core.js?v=5';
+} from './core.js?v=6';
 
 const MP_VERSION = '0.10.14';
 const MP_BASE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}`;
@@ -26,6 +26,10 @@ const el = {
   listTitle: $('listTitle'), bestText: $('bestText'), list: $('list'), hint: $('hint'),
 };
 const ctx = el.canvas.getContext('2d');
+
+// スマホ・タブレット単体で使っているか（背面カメラを使う）
+const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent)
+  || (/macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 
 // ---- 設定 ----
 const DEFAULTS = { mode: 'bar', heightCm: 170, floorOn: true, floor: 0.5, lossOn: true, lossPct: 20, cameraId: '' };
@@ -472,6 +476,7 @@ async function openCamera(deviceId) {
   stream = null;
   const video = { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 60 } };
   if (deviceId) video.deviceId = { exact: deviceId };
+  else if (isMobile) video.facingMode = { ideal: 'environment' };
   stream = await navigator.mediaDevices.getUserMedia({ video, audio: false });
   const track = stream.getVideoTracks()[0];
   try {
@@ -504,7 +509,7 @@ async function start() {
     const current = stream.getVideoTracks()[0].getSettings().deviceId;
     // 保存したカメラがなければ iPhone を優先する
     // iPhone の名前は自由に付けられるので、Mac 内蔵・デスクビュー以外を iPhone とみなす
-    const iphone = devices.find((d) => /iphone/i.test(d.label))
+    const iphone = isMobile ? null : devices.find((d) => /iphone/i.test(d.label))
       ?? devices.find((d) => d.label && !/facetime|built-?in|内蔵|desk ?view|デスクビュー/i.test(d.label));
     const saved = devices.find((d) => d.deviceId === settings.cameraId);
     const want = saved?.deviceId ?? iphone?.deviceId ?? current;
@@ -513,15 +518,27 @@ async function start() {
     el.calibrate.disabled = false;
     el.ruler.disabled = false;
     el.overlay.hidden = true;
+    keepAwake();
     if (!scale) setStatus(el.scaleStatus, '換算：未設定（「身長で合わせる」か「長さで合わせる」）', 'ng');
   } catch (err) {
     console.error(err);
     const denied = err?.name === 'NotAllowedError';
     showOverlay(denied
       ? 'カメラの使用が許可されていません。\nブラウザのアドレスバーにあるカメラのマークから許可して、もう一度押してください。'
-      : 'カメラが見つかりません。\niPhone をロックして Mac の近くに置き、もう一度押してください。');
+      : isMobile
+        ? 'カメラを開けませんでした。\nほかのアプリがカメラを使っていないか確かめて、もう一度押してください。'
+        : 'カメラが見つかりません。\niPhone をロックして Mac の近くに置き、もう一度押してください。');
   }
 }
+
+// 計測中に画面が消えないようにする（対応している端末だけ）
+let wakeLock = null;
+async function keepAwake() {
+  try { wakeLock = await navigator.wakeLock?.request('screen'); } catch { /* 使えなければ何もしない */ }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && stream) keepAwake();
+});
 
 // ---- 操作 ----
 function setMode(mode) {
@@ -548,6 +565,15 @@ el.calibrate.addEventListener('click', startCalibration);
 el.ruler.addEventListener('click', startRuler);
 el.canvas.addEventListener('click', onCanvasClick);
 el.newSet.addEventListener('click', resetSet);
+$('newSet2').addEventListener('click', resetSet);
+$('openSettings').addEventListener('click', () => document.body.classList.add('settings-open'));
+$('closeSettings').addEventListener('click', () => document.body.classList.remove('settings-open'));
+// 縮尺合わせは映像を見ながら行うので、押したら設定を閉じる
+for (const id of ['calibrate', 'ruler']) $(id).addEventListener('click', () => document.body.classList.remove('settings-open'));
+const help = $('help');
+for (const id of ['openHelp', 'openHelp2', 'openHelp3']) $(id).addEventListener('click', () => help.showModal());
+$('closeHelp').addEventListener('click', () => help.close());
+help.addEventListener('click', (ev) => { if (ev.target === help) help.close(); });
 el.testSound.addEventListener('click', alarm);
 el.floorOn.addEventListener('change', () => { settings.floorOn = el.floorOn.checked; save(); });
 el.lossOn.addEventListener('change', () => { settings.lossOn = el.lossOn.checked; save(); });
@@ -566,5 +592,8 @@ el.camera.addEventListener('change', async () => {
 });
 navigator.mediaDevices?.addEventListener?.('devicechange', () => { if (stream) listCameras().then(() => { el.camera.value = stream.getVideoTracks()[0]?.getSettings().deviceId ?? ''; }); });
 
+el.overlayText.textContent = isMobile
+  ? 'スマホを横向きに固定し、選手の真横に置いてから、カメラを開始してください。'
+  : 'iPhone を Mac の近くに置き、カメラを開始してください。';
 applySettingsToUi();
 loadPose();

@@ -16,6 +16,8 @@ html, body { height: 100%; }
 
 body {
   margin: 0;
+  height: 100dvh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   background: var(--bg);
   color: var(--text);
   font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", sans-serif;
@@ -211,9 +213,97 @@ main {
 .hint { margin: 0; padding: 10px 20px 14px; font-size: 12px; color: var(--dim); border-top: 1px solid var(--line); }
 .hint:empty { display: none; }
 
-@media (max-width: 900px) {
-  main { grid-template-columns: 1fr; grid-template-rows: minmax(240px, 45vh) 1fr; }
+
+.compact-only { display: none; }
+[hidden] { display: none !important; }
+
+/* 映像の上に浮かべる操作ボタン（スマホ用） */
+.float {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  gap: 8px;
+  z-index: 2;
+}
+.float button { background: rgba(23, 27, 31, .85); min-height: 40px; }
+
+/* ---- 使い方 ---- */
+.help {
+  width: min(720px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.help::backdrop { background: rgba(0, 0, 0, .6); }
+.helpHead {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+.helpHead h1 { margin: 0; font-size: 18px; }
+.helpBody { padding: 4px 20px 24px; line-height: 1.75; }
+.helpBody h2 { margin: 24px 0 6px; font-size: 16px; color: var(--accent); }
+.helpBody h3 { margin: 14px 0 2px; font-size: 14px; }
+.helpBody p { margin: 8px 0; }
+.helpBody ul, .helpBody ol { margin: 6px 0; padding-left: 1.4em; }
+.helpBody li { margin: 3px 0; }
+.helpBody table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 14px; }
+.helpBody th, .helpBody td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.helpBody th { color: var(--dim); font-weight: 600; white-space: nowrap; }
+
+/* ---- スマホ・小さい画面：設定は折りたたみ、映像と数値を広く使う ---- */
+@media (max-width: 900px), (max-height: 520px) {
+  .compact-only { display: revert; }
+  .float.compact-only { display: flex; }
+  .wide-only { display: none; }
+
+  .bar {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    overflow: auto;
+    align-content: flex-start;
+    padding: calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+    border-bottom: 0;
+  }
+  body.settings-open .bar { display: flex; }
+  .bar input[type="number"], .bar select, .bar button { height: 44px; font-size: 16px; }
+  .actions { margin-left: 0; width: 100%; }
+
+  .status { left: 10px; bottom: 8px; font-size: 11px; gap: 4px; }
+}
+
+/* 縦向き：上に映像、下に数値 */
+@media (max-width: 900px) and (orientation: portrait) {
+  main { grid-template-columns: 1fr; grid-template-rows: minmax(220px, 50dvh) 1fr; }
   .panel { border-left: 0; border-top: 1px solid var(--line); }
   .big { font-size: 72px; }
-  .actions { margin-left: 0; }
+}
+
+/* 横向きのスマホ：左に映像、右に数値 */
+@media (max-height: 520px) and (orientation: landscape) {
+  main { grid-template-columns: minmax(0, 1fr) clamp(190px, 30vw, 260px); }
+  .readout { padding: 10px 14px 8px; }
+  .readout .label { font-size: 11px; }
+  .big { font-size: clamp(48px, 17vh, 76px); gap: 6px; }
+  .big small { font-size: 15px; }
+  .zone { font-size: 13px; min-height: 1.4em; }
+  .sub { font-size: 12px; margin-top: 2px; flex-wrap: wrap; gap: 0 8px; }
+  .listHead { padding: 6px 14px 2px; font-size: 11px; }
+  .list { padding: 0 6px 6px; }
+  .list li { grid-template-columns: 2.8em 1fr 3.2em; padding: 4px 6px; gap: 4px; }
+  .list .v { font-size: 16px; }
+  .list .n, .list .loss { font-size: 12px; }
+  .list .state { grid-column: 1 / -1; text-align: left; font-size: 11px; }
+  .list li:not(.alert) .state { display: none; }
+  .hint { display: none; }
 }
