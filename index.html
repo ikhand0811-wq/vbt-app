@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#0e1113">
   <title>VBT 速度計測</title>
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
   <header class="bar" id="settings">
@@ -97,12 +97,32 @@
     <div class="helpBody">
       <p>カメラに映った人の動きから速度を測り、基準を下回ったら音で知らせます。映像はこの端末の中だけで処理され、外部には送られません。</p>
 
+      <h2>使える機器</h2>
+      <p>カメラとブラウザがあれば、どの機器でも使えます。<b>Mac や iPad のカメラでもできます。</b></p>
+      <table>
+        <tr><th>スマホ</th><td>iPhone、Android。背面カメラを使います</td></tr>
+        <tr><th>iPad・タブレット</th><td>背面カメラを使います。画面が大きいので数値が見やすい</td></tr>
+        <tr><th>パソコン</th><td>Mac・Windows の内蔵カメラ、または外付けの Web カメラ</td></tr>
+        <tr><th>Mac ＋ iPhone</th><td>iPhone をカメラにして、Mac の大きな画面で見る</td></tr>
+      </table>
+      <p>ブラウザは Safari か Chrome を使ってください。複数のカメラがあるときは「設定」のカメラ欄で切り替えられます。</p>
+
       <h2>準備</h2>
-      <h3>スマホ1台で使う</h3>
+      <h3>共通</h3>
       <ul>
-        <li>スマホを<b>横向き</b>にして三脚などで固定し、選手の<b>真横</b>に置く</li>
+        <li>カメラを三脚などで<b>固定</b>し、選手の<b>真横</b>に置く</li>
         <li>頭から足まで全身が映る距離にする</li>
-        <li>消音モードを切り、音量を上げる（アラート音のため）</li>
+        <li>音量を上げる（アラート音のため）</li>
+      </ul>
+      <h3>スマホ・iPad で使う</h3>
+      <ul>
+        <li><b>横向き</b>にして固定する</li>
+        <li>消音モードを切る</li>
+      </ul>
+      <h3>パソコンのカメラで使う</h3>
+      <ul>
+        <li>画面を選手のほうへ向け、全身が映るまで離れる</li>
+        <li>内蔵カメラは画面の角度で映り方が変わるので、縮尺を合わせたあとは画面を動かさない</li>
       </ul>
       <h3>Mac の画面で見る（iPhone をカメラにする）</h3>
       <ul>
@@ -160,6 +180,6 @@
     </div>
   </dialog>
 
-  <script type="module" src="app.js?v=6"></script>
+  <script type="module" src="app.js?v=7"></script>
 </body>
 </html>

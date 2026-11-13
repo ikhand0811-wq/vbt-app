@@ -1,6 +1,6 @@
 import {
   zoneName, scaleFromStanding, Tracker, RepDetector, TrialDetector, SetTracker,
-} from './core.js?v=6';
+} from './core.js?v=7';
 
 const MP_VERSION = '0.10.14';
 const MP_BASE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}`;
@@ -402,7 +402,7 @@ function finishCalibration(text, cls) {
 // ---- 毎フレーム ----
 function onFrame(now, meta) {
   if (!stream) return;
-  el.video.requestVideoFrameCallback(onFrame);
+  nextFrame();
 
   const vw = el.video.videoWidth, vh = el.video.videoHeight;
   if (!vw || !vh) return;
@@ -493,13 +493,25 @@ async function openCamera(deviceId) {
   tracker = new Tracker();
   reps.reset();
   trials.reset();
-  el.video.requestVideoFrameCallback(onFrame);
+  nextFrame();
+}
+
+// 新しいコマが来るたびに onFrame を呼ぶ。対応していないブラウザでは画面の描き替えに合わせる。
+let lastVideoTime = -1;
+function nextFrame() {
+  if (el.video.requestVideoFrameCallback) { el.video.requestVideoFrameCallback(onFrame); return; }
+  requestAnimationFrame(function tick(now) {
+    if (!stream) return;
+    if (el.video.currentTime === lastVideoTime) { requestAnimationFrame(tick); return; }
+    lastVideoTime = el.video.currentTime;
+    onFrame(now, null);
+  });
 }
 
 async function start() {
   ensureAudio();
   if (!navigator.mediaDevices?.getUserMedia) {
-    showOverlay('このブラウザではカメラを使えません。Safari で「VBTを起動」から開いてください。', false);
+    showOverlay('このブラウザではカメラを使えません。\nSafari か Chrome で開いてください。', false);
     return;
   }
   showOverlay('カメラに接続しています…', false);
@@ -527,7 +539,7 @@ async function start() {
       ? 'カメラの使用が許可されていません。\nブラウザのアドレスバーにあるカメラのマークから許可して、もう一度押してください。'
       : isMobile
         ? 'カメラを開けませんでした。\nほかのアプリがカメラを使っていないか確かめて、もう一度押してください。'
-        : 'カメラが見つかりません。\niPhone をロックして Mac の近くに置き、もう一度押してください。');
+        : 'カメラが見つかりません。\nカメラがつながっているか確かめて、もう一度押してください。\n（iPhone をカメラにする場合は、ロックして Mac の近くに置きます）');
   }
 }
 
@@ -594,6 +606,11 @@ navigator.mediaDevices?.addEventListener?.('devicechange', () => { if (stream) l
 
 el.overlayText.textContent = isMobile
   ? 'スマホを横向きに固定し、選手の真横に置いてから、カメラを開始してください。'
-  : 'iPhone を Mac の近くに置き、カメラを開始してください。';
+  : 'カメラを選手の真横に固定してから、カメラを開始してください。\nパソコンの内蔵カメラでも、iPhone をカメラにしても使えます。';
 applySettingsToUi();
 loadPose();
+
+// はじめて開いたときは使い方を見せる
+try {
+  if (!localStorage.getItem('vbt-help-seen')) { help.showModal(); localStorage.setItem('vbt-help-seen', '1'); }
+} catch { /* 保存できない環境では毎回は出さない */ }
