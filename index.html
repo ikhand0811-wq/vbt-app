@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VBT 速度計測</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="bar">
+    <label class="field">カメラ
+      <select id="camera" disabled><option>未接続</option></select>
+    </label>
+
+    <div class="field">モード
+      <div class="seg" role="radiogroup" aria-label="モード">
+        <button type="button" id="modeBar" role="radio">バー</button>
+        <button type="button" id="modeBody" role="radio">体</button>
+      </div>
+    </div>
+
+    <label class="field">身長
+      <span class="unit"><input id="height" type="number" min="100" max="230" step="1" inputmode="numeric"> cm</span>
+    </label>
+
+    <label class="field check">
+      <span><input id="floorOn" type="checkbox"> 下限速度</span>
+      <span class="unit"><input id="floor" type="number" min="0" max="10" step="0.05" inputmode="decimal"> m/s</span>
+    </label>
+
+    <label class="field check">
+      <span><input id="lossOn" type="checkbox"> 速度低下率</span>
+      <span class="unit"><input id="lossPct" type="number" min="1" max="90" step="1" inputmode="numeric"> %</span>
+    </label>
+
+    <div class="actions">
+      <button type="button" id="calibrate" disabled>身長で合わせる</button>
+      <button type="button" id="ruler" disabled>長さで合わせる</button>
+      <button type="button" id="newSet">新しいセット</button>
+      <button type="button" id="testSound" class="quiet">音のテスト</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="stage">
+      <video id="video" playsinline muted></video>
+      <canvas id="canvas"></canvas>
+      <div id="overlay" class="overlay">
+        <p id="overlayText">iPhone を Mac の近くに置き、カメラを開始してください。</p>
+        <button type="button" id="start" class="primary">カメラを開始</button>
+      </div>
+      <div id="countdown" class="countdown" hidden></div>
+      <div class="status">
+        <span id="poseStatus">骨格検出：読み込み中…</span>
+        <span id="scaleStatus">換算：未設定</span>
+        <span id="fps"></span>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div id="readout" class="readout">
+        <div class="label" id="bigLabel">平均速度</div>
+        <div class="big"><span id="big">–</span><small>m/s</small></div>
+        <div class="zone" id="zone">&nbsp;</div>
+        <div class="sub">
+          <span>今 <b id="live">–</b> m/s</span>
+          <span id="subExtra"></span>
+        </div>
+      </div>
+
+      <div class="listHead">
+        <span id="listTitle">このセット</span>
+        <span id="bestText"></span>
+      </div>
+      <ol id="list" class="list"></ol>
+      <p id="hint" class="hint"></p>
+    </aside>
+  </main>
+
+  <script type="module" src="app.js?v=5"></script>
+</body>
+</html>
